@@ -1,0 +1,496 @@
+{
+	"openapi": "3.0.0",
+	"components": {
+		"examples": {},
+		"headers": {},
+		"parameters": {},
+		"requestBodies": {},
+		"responses": {},
+		"schemas": {
+			"TodoStatus": {
+				"type": "string",
+				"enum": [
+					"PENDING",
+					"IN_PROGRESS",
+					"COMPLETED",
+					"CANCELLED"
+				]
+			},
+			"TodoPriority": {
+				"type": "string",
+				"enum": [
+					"LOW",
+					"MEDIUM",
+					"HIGH",
+					"URGENT"
+				]
+			},
+			"Todo": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TodoStatus"
+					},
+					"priority": {
+						"$ref": "#/components/schemas/TodoPriority"
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"dueDate": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"title",
+					"status",
+					"priority",
+					"tags",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TodoStats": {
+				"properties": {
+					"total": {
+						"type": "number",
+						"format": "double"
+					},
+					"pending": {
+						"type": "number",
+						"format": "double"
+					},
+					"inProgress": {
+						"type": "number",
+						"format": "double"
+					},
+					"completed": {
+						"type": "number",
+						"format": "double"
+					},
+					"cancelled": {
+						"type": "number",
+						"format": "double"
+					},
+					"byPriority": {
+						"properties": {
+							"URGENT": {
+								"type": "number",
+								"format": "double"
+							},
+							"HIGH": {
+								"type": "number",
+								"format": "double"
+							},
+							"MEDIUM": {
+								"type": "number",
+								"format": "double"
+							},
+							"LOW": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"URGENT",
+							"HIGH",
+							"MEDIUM",
+							"LOW"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"total",
+					"pending",
+					"inProgress",
+					"completed",
+					"cancelled",
+					"byPriority"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"CreateTodoRequest": {
+				"properties": {
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"priority": {
+						"$ref": "#/components/schemas/TodoPriority"
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"dueDate": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"title"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"UpdateTodoRequest": {
+				"properties": {
+					"title": {
+						"type": "string"
+					},
+					"description": {
+						"type": "string"
+					},
+					"status": {
+						"$ref": "#/components/schemas/TodoStatus"
+					},
+					"priority": {
+						"$ref": "#/components/schemas/TodoPriority"
+					},
+					"tags": {
+						"items": {
+							"type": "string"
+						},
+						"type": "array"
+					},
+					"dueDate": {
+						"type": "string"
+					}
+				},
+				"type": "object",
+				"additionalProperties": false
+			}
+		},
+		"securitySchemes": {}
+	},
+	"info": {
+		"title": "tsoa-koa-hexagonal-todo",
+		"version": "1.0.0",
+		"description": "Full fledged Koa backend with TSOA and Hexagonal Architecture for Todo List",
+		"contact": {}
+	},
+	"paths": {
+		"/api/todos": {
+			"get": {
+				"operationId": "GetTodos",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Todo"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieve all todos with optional filtering options.",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "Filter by status (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)",
+						"in": "query",
+						"name": "status",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TodoStatus"
+						}
+					},
+					{
+						"description": "Filter by priority (LOW, MEDIUM, HIGH, URGENT)",
+						"in": "query",
+						"name": "priority",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/TodoPriority"
+						}
+					},
+					{
+						"description": "Search keyword in title or description",
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by tag name",
+						"in": "query",
+						"name": "tag",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateTodo",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Todo"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation failed"
+					},
+					"409": {
+						"description": "Duplicate title"
+					}
+				},
+				"description": "Create a new todo item.",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateTodoRequest"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/todos/stats": {
+			"get": {
+				"operationId": "GetStats",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TodoStats"
+								}
+							}
+						}
+					}
+				},
+				"description": "Get overall todo statistics (totals grouped by status and priority).",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/api/todos/{id}": {
+			"get": {
+				"operationId": "GetTodoById",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Todo"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "Todo not found"
+					}
+				},
+				"description": "Get single todo item by ID.",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The unique identifier of the todo",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateTodo",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Todo"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Validation failed"
+					},
+					"404": {
+						"description": "Todo not found"
+					}
+				},
+				"description": "Update an existing todo item.",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The unique identifier of the todo",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateTodoRequest"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteTodo",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					},
+					"404": {
+						"description": "Todo not found"
+					}
+				},
+				"description": "Remove a todo item by ID.",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The unique identifier of the todo",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/todos/{id}/status": {
+			"patch": {
+				"operationId": "UpdateStatus",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Todo"
+								}
+							}
+						}
+					},
+					"400": {
+						"description": "Invalid status parameter"
+					},
+					"404": {
+						"description": "Todo not found"
+					}
+				},
+				"description": "Quick patch to update only the status of a todo item.",
+				"tags": [
+					"Todos"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"description": "The unique identifier of the todo",
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"description": "Payload containing new status",
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"status": {
+										"$ref": "#/components/schemas/TodoStatus"
+									}
+								},
+								"required": [
+									"status"
+								],
+								"type": "object",
+								"description": "Payload containing new status"
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"servers": [
+		{
+			"url": "/"
+		}
+	]
+}
